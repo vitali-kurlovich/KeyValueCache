@@ -18,12 +18,14 @@ final class KeyValueCache<Key: Hashable, Value> {
 
     public var countLimit: Int = 0 {
         didSet {
+            precondition(countLimit >= 0)
             releaseIfNeeds(byCount: 0)
         }
     }
 
     public var totalCostLimit: Int = 0 {
         didSet {
+            precondition(totalCostLimit >= 0)
             releaseIfNeeds(byCost: 0)
         }
     }
@@ -80,6 +82,10 @@ extension KeyValueCache {
                   cost: Int = 1)
     {
         precondition(cost >= 0)
+
+        guard totalCostLimit >= cost || totalCostLimit == 0 else {
+            return
+        }
 
         if let expare = expireDate, expare <= Date() {
             return
@@ -145,13 +151,6 @@ extension KeyValueCache {
 
 internal
 extension KeyValueCache {
-    func releaseIfNeeds() {
-        removeAllExpired()
-
-        releaseIfNeeds(byCost: 0)
-        releaseIfNeeds(byCount: 0)
-    }
-
     func releaseIfNeeds(for info: KeyValueCacheInfo) {
         removeAllExpired()
 
