@@ -13,11 +13,20 @@ public enum EventLoopGroupProvider {
 
 public
 final class KeyValueCache<Key: Hashable, Value> {
-    private var cache: [Key: ValueType<Value>] = [:]
-    private var _totalCost: Int = 0
+    internal var _cache: [Key: ValueType<Value>] = [:]
+    internal var _totalCost: Int = 0
 
-    public var countLimit: Int = 0
-    public var totalCostLimit: Int = 0
+    public var countLimit: Int = 0 {
+        didSet {
+            releaseIfNeeds(byCount: 0)
+        }
+    }
+
+    public var totalCostLimit: Int = 0 {
+        didSet {
+            releaseIfNeeds(byCost: 0)
+        }
+    }
 
     private let priority: PriorityComparator
     private let groupProvider: EventLoopGroupProvider
@@ -82,7 +91,7 @@ extension KeyValueCache {
 
             self.releaseIfNeeds(for: info)
 
-            self.cache[key] = .init(value: value, info: info)
+            self._cache[key] = .init(value: value, info: info)
 
             self._totalCost += info.cost
         }
@@ -92,7 +101,7 @@ extension KeyValueCache {
         let promise = eventLoop.makePromise(of: Value?.self)
 
         eventLoop.execute {
-            guard let cachedValue = self.cache[key] else {
+            guard let cachedValue = self._cache[key] else {
                 promise.succeed(nil)
                 return
             }
@@ -100,13 +109,13 @@ extension KeyValueCache {
             let now = Date()
 
             if let expireDate = cachedValue.expireDate, expireDate <= now {
-                self.cache.removeValue(forKey: key)
+                self._cache.removeValue(forKey: key)
                 self._totalCost -= cachedValue.cost
 
                 promise.succeed(nil)
 
             } else {
-                self.cache[key] = cachedValue.retainReads(now)
+                self._cache[key] = cachedValue.retainReads(now)
 
                 promise.succeed(cachedValue.value)
             }
@@ -117,18 +126,18 @@ extension KeyValueCache {
 
     func removeValue(forKey key: Key) {
         eventLoop.execute {
-            guard let cachedValue = self.cache[key] else {
+            guard let cachedValue = self._cache[key] else {
                 return
             }
 
-            self.cache.removeValue(forKey: key)
+            self._cache.removeValue(forKey: key)
             self._totalCost -= cachedValue.cost
         }
     }
 
     func removeAllValues() {
         eventLoop.execute {
-            self.cache.removeAll()
+            self._cache.removeAll()
             self._totalCost = 0
         }
     }
@@ -136,24 +145,95 @@ extension KeyValueCache {
 
 internal
 extension KeyValueCache {
+    func releaseIfNeeds() {
+        removeAllExpired()
+
+        releaseIfNeeds(byCost: 0)
+        releaseIfNeeds(byCount: 0)
+    }
+
     func releaseIfNeeds(for info: KeyValueCacheInfo) {
         removeAllExpired()
 
-        if countLimit > 0, countLimit >= cache.count {
-            release(count: cache.count + 1 - countLimit)
-        }
+        releaseIfNeeds(byCost: info.cost)
+        releaseIfNeeds(byCount: 1)
+    }
 
-        if totalCostLimit > 0, totalCostLimit < _totalCost + info.cost {
-            release(cost: _totalCost + info.cost - totalCostLimit)
+    func releaseIfNeeds(byCost addedCost: Int) {
+        precondition(addedCost >= 0)
+
+        if totalCostLimit > 0, totalCostLimit < _totalCost + addedCost {
+            release(cost: _totalCost + addedCost - totalCostLimit)
         }
     }
 
+    func releaseIfNeeds(byCount addedCount: Int) {
+        precondition(addedCount >= 0)
+
+        if countLimit > 0, countLimit < _cache.count + addedCount {
+            release(count: _cache.count + addedCount - countLimit)
+        }
+    }
+
+    func removeAllExpired() {
+        let now = Date()
+
+        let containsExpired = _cache.contains(where: { (_, value: ValueType<Value>) in
+            guard let expireDate = value.expireDate else {
+                return false
+            }
+
+            return expireDate >= now
+        })
+
+        guard containsExpired else {
+            return
+        }
+
+        _cache = _cache.filter { (_, value: ValueType<Value>) in
+            guard let expireDate = value.expireDate else {
+                return false
+            }
+
+            return expireDate >= now
+        }
+
+        _totalCost = 0
+
+        for (_, value) in _cache {
+            _totalCost += value.cost
+        }
+    }
+}
+
+private
+extension KeyValueCache {
     func release(count: Int) {
         precondition(count > 0)
 
         var count = count
 
         while count > 0 {
+            var iterator = _cache.makeIterator()
+
+            guard var lowestPriority = iterator.next() else {
+                return
+            }
+
+            while let next = iterator.next() {
+                let result = priority.comparePriority(first: lowestPriority.value.info, next: next.value.info)
+
+                if result == .orderedDescending {
+                    lowestPriority = next
+                }
+            }
+
+            let key = lowestPriority.key
+            let value = lowestPriority.value
+            _cache.removeValue(forKey: key)
+
+            _totalCost -= value.cost
+
             count -= 1
         }
     }
@@ -165,30 +245,6 @@ extension KeyValueCache {
 
         while cost > 0 {
             cost -= 1
-        }
-    }
-
-    func removeAllExpired() {
-        let now = Date()
-
-        let oldCount = cache.count
-
-        cache = cache.filter { (_, value: ValueType<Value>) in
-            guard let expireDate = value.expireDate else {
-                return false
-            }
-
-            return expireDate >= now
-        }
-
-        guard oldCount != cache.count else {
-            return
-        }
-
-        _totalCost = 0
-
-        for (_, value) in cache {
-            _totalCost += value.cost
         }
     }
 }
