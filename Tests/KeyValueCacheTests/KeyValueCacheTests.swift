@@ -1,4 +1,5 @@
 @testable import KeyValueCache
+import NIO
 import XCTest
 
 final class KeyValueCacheTests: XCTestCase {
@@ -192,7 +193,9 @@ final class KeyValueCacheTests: XCTestCase {
     }
 
     func testRemoveAll() throws {
-        let valueCache = KeyValueCache<String, String>()
+        let eventGroup = MultiThreadedEventLoopGroup(numberOfThreads: 1)
+
+        let valueCache = KeyValueCache<String, String>(eventLoopGroupProvider: .shared(eventGroup))
 
         let now = Date()
 
@@ -251,5 +254,14 @@ final class KeyValueCacheTests: XCTestCase {
         }
 
         wait(for: [expA, expB, expC], timeout: 1.0)
+
+        let shutdownExp = XCTestExpectation(description: "Shutdown shared event group")
+
+        eventGroup.shutdownGracefully { error in
+            XCTAssertNil(error)
+            shutdownExp.fulfill()
+        }
+
+        wait(for: [shutdownExp], timeout: 1.0)
     }
 }
