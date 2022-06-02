@@ -46,10 +46,9 @@ final class KeyValueCacheTests: XCTestCase {
         }
 
         wait(for: [expA1, expB1], timeout: 1.0)
-        
-        
+
         Thread.sleep(forTimeInterval: 3)
-        
+
         let expA2 = XCTestExpectation(description: "Read for 'A' key after deadline")
 
         valueCache.value(forKey: "A").whenSuccess { value in
@@ -66,6 +65,5 @@ final class KeyValueCacheTests: XCTestCase {
         }
 
         wait(for: [expA2, expB2], timeout: 1.0)
-        
     }
 }
