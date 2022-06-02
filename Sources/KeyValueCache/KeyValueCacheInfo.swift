@@ -26,19 +26,4 @@ struct KeyValueCacheInfo {
         self.expireDate = expireDate
         self.cost = cost
     }
-
-    func set(lastReadDate: Date, readsCount: Int) -> Self {
-        precondition(self.readsCount <= readsCount)
-        precondition(self.lastReadDate == nil || self.lastReadDate! < lastReadDate)
-
-        return .init(cost: cost, expireDate: expireDate, lastReadDate: lastReadDate, readsCount: readsCount)
-    }
-
-    func set(lastReadDate: Date) -> Self {
-        return set(lastReadDate: lastReadDate, readsCount: readsCount)
-    }
-
-    func set(readsCount: Int) -> Self {
-        return .init(cost: cost, expireDate: expireDate, lastReadDate: lastReadDate, readsCount: readsCount)
-    }
 }
