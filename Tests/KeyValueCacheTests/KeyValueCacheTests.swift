@@ -4,26 +4,26 @@ import XCTest
 
 final class KeyValueCacheTests: XCTestCase {
     func testExpire() throws {
-        let valueCache = KeyValueCache<String, String>()
+        let cache = KeyValueCache<String, String>()
 
         let now = Date()
 
-        valueCache.setValue("AAAAAA", forKey: "A", expireDate: now.addingTimeInterval(3))
+        cache.setValue("AAAAAA", forKey: "A", expireDate: now.addingTimeInterval(3))
 
-        valueCache.setValue("BBBBBB", forKey: "B", expireDate: now.addingTimeInterval(6))
+        cache.setValue("BBBBBB", forKey: "B", expireDate: now.addingTimeInterval(6))
 
-        valueCache.setValue("CCCCCC", forKey: "C")
+        cache.setValue("CCCCCC", forKey: "C")
 
         let expA = XCTestExpectation(description: "Read for 'A' key")
 
-        valueCache.value(forKey: "A").whenSuccess { value in
+        cache.value(forKey: "A").whenSuccess { value in
             XCTAssertEqual("AAAAAA", value)
 
             expA.fulfill()
         }
 
         let expB = XCTestExpectation(description: "Read for 'B' key")
-        valueCache.value(forKey: "B").whenSuccess { value in
+        cache.value(forKey: "B").whenSuccess { value in
             XCTAssertEqual("BBBBBB", value)
 
             expB.fulfill()
@@ -35,14 +35,14 @@ final class KeyValueCacheTests: XCTestCase {
 
         let expA1 = XCTestExpectation(description: "Read for 'A' key after deadline")
 
-        valueCache.value(forKey: "A").whenSuccess { value in
+        cache.value(forKey: "A").whenSuccess { value in
 
             XCTAssertNil(value)
             expA1.fulfill()
         }
 
         let expB1 = XCTestExpectation(description: "Read for 'B' key")
-        valueCache.value(forKey: "B").whenSuccess { value in
+        cache.value(forKey: "B").whenSuccess { value in
             XCTAssertEqual("BBBBBB", value)
 
             expB1.fulfill()
@@ -54,14 +54,14 @@ final class KeyValueCacheTests: XCTestCase {
 
         let expA2 = XCTestExpectation(description: "Read for 'A' key after deadline")
 
-        valueCache.value(forKey: "A").whenSuccess { value in
+        cache.value(forKey: "A").whenSuccess { value in
 
             XCTAssertNil(value)
             expA2.fulfill()
         }
 
         let expB2 = XCTestExpectation(description: "Read for 'B' key after deadline")
-        valueCache.value(forKey: "B").whenSuccess { value in
+        cache.value(forKey: "B").whenSuccess { value in
             XCTAssertNil(value)
 
             expB2.fulfill()
@@ -69,7 +69,7 @@ final class KeyValueCacheTests: XCTestCase {
 
         let expC = XCTestExpectation(description: "Read for 'C'")
 
-        valueCache.value(forKey: "C").whenSuccess { value in
+        cache.value(forKey: "C").whenSuccess { value in
             XCTAssertEqual("CCCCCC", value)
 
             expC.fulfill()
@@ -79,33 +79,33 @@ final class KeyValueCacheTests: XCTestCase {
     }
 
     func testRemoveValue() throws {
-        let valueCache = KeyValueCache<String, String>()
+        let cache = KeyValueCache<String, String>()
 
         let now = Date()
 
-        valueCache.setValue("AAAAAA", forKey: "A", expireDate: now.addingTimeInterval(3))
+        cache.setValue("AAAAAA", forKey: "A", expireDate: now.addingTimeInterval(3))
 
-        valueCache.setValue("BBBBBB", forKey: "B", expireDate: now.addingTimeInterval(6))
+        cache.setValue("BBBBBB", forKey: "B", expireDate: now.addingTimeInterval(6))
 
-        valueCache.setValue("CCCCCC", forKey: "C")
+        cache.setValue("CCCCCC", forKey: "C")
 
         var expA = XCTestExpectation(description: "Read for 'A' key")
         var expB = XCTestExpectation(description: "Read for 'B' key")
         var expC = XCTestExpectation(description: "Read for 'C' key")
 
-        valueCache.value(forKey: "A").whenSuccess { value in
+        cache.value(forKey: "A").whenSuccess { value in
 
             XCTAssertEqual("AAAAAA", value)
             expA.fulfill()
         }
 
-        valueCache.value(forKey: "B").whenSuccess { value in
+        cache.value(forKey: "B").whenSuccess { value in
 
             XCTAssertEqual("BBBBBB", value)
             expB.fulfill()
         }
 
-        valueCache.value(forKey: "C").whenSuccess { value in
+        cache.value(forKey: "C").whenSuccess { value in
 
             XCTAssertEqual("CCCCCC", value)
             expC.fulfill()
@@ -117,21 +117,21 @@ final class KeyValueCacheTests: XCTestCase {
         expB = XCTestExpectation(description: "Read for 'B' key")
         expC = XCTestExpectation(description: "Read for 'C' key")
 
-        valueCache.removeValue(forKey: "A")
+        cache.removeValue(forKey: "A")
 
-        valueCache.value(forKey: "A").whenSuccess { value in
+        cache.value(forKey: "A").whenSuccess { value in
 
             XCTAssertNil(value)
             expA.fulfill()
         }
 
-        valueCache.value(forKey: "B").whenSuccess { value in
+        cache.value(forKey: "B").whenSuccess { value in
 
             XCTAssertEqual("BBBBBB", value)
             expB.fulfill()
         }
 
-        valueCache.value(forKey: "C").whenSuccess { value in
+        cache.value(forKey: "C").whenSuccess { value in
 
             XCTAssertEqual("CCCCCC", value)
             expC.fulfill()
@@ -143,21 +143,21 @@ final class KeyValueCacheTests: XCTestCase {
         expB = XCTestExpectation(description: "Read for 'B' key")
         expC = XCTestExpectation(description: "Read for 'C' key")
 
-        valueCache.removeValue(forKey: "C")
+        cache.removeValue(forKey: "C")
 
-        valueCache.value(forKey: "A").whenSuccess { value in
+        cache.value(forKey: "A").whenSuccess { value in
 
             XCTAssertNil(value)
             expA.fulfill()
         }
 
-        valueCache.value(forKey: "B").whenSuccess { value in
+        cache.value(forKey: "B").whenSuccess { value in
 
             XCTAssertEqual("BBBBBB", value)
             expB.fulfill()
         }
 
-        valueCache.value(forKey: "C").whenSuccess { value in
+        cache.value(forKey: "C").whenSuccess { value in
 
             XCTAssertNil(value)
             expC.fulfill()
@@ -169,21 +169,21 @@ final class KeyValueCacheTests: XCTestCase {
         expB = XCTestExpectation(description: "Read for 'B' key")
         expC = XCTestExpectation(description: "Read for 'C' key")
 
-        valueCache.removeValue(forKey: "B")
+        cache.removeValue(forKey: "B")
 
-        valueCache.value(forKey: "A").whenSuccess { value in
+        cache.value(forKey: "A").whenSuccess { value in
 
             XCTAssertNil(value)
             expA.fulfill()
         }
 
-        valueCache.value(forKey: "B").whenSuccess { value in
+        cache.value(forKey: "B").whenSuccess { value in
 
             XCTAssertNil(value)
             expB.fulfill()
         }
 
-        valueCache.value(forKey: "C").whenSuccess { value in
+        cache.value(forKey: "C").whenSuccess { value in
 
             XCTAssertNil(value)
             expC.fulfill()
@@ -195,33 +195,33 @@ final class KeyValueCacheTests: XCTestCase {
     func testRemoveAll() throws {
         let eventGroup = MultiThreadedEventLoopGroup(numberOfThreads: 1)
 
-        let valueCache = KeyValueCache<String, String>(eventLoopGroupProvider: .shared(eventGroup))
+        let cache = KeyValueCache<String, String>(eventLoopGroupProvider: .shared(eventGroup))
 
         let now = Date()
 
-        valueCache.setValue("AAAAAA", forKey: "A", expireDate: now.addingTimeInterval(3))
+        cache.setValue("AAAAAA", forKey: "A", expireDate: now.addingTimeInterval(3))
 
-        valueCache.setValue("BBBBBB", forKey: "B", expireDate: now.addingTimeInterval(6))
+        cache.setValue("BBBBBB", forKey: "B", expireDate: now.addingTimeInterval(6))
 
-        valueCache.setValue("CCCCCC", forKey: "C")
+        cache.setValue("CCCCCC", forKey: "C")
 
         var expA = XCTestExpectation(description: "Read for 'A' key")
         var expB = XCTestExpectation(description: "Read for 'B' key")
         var expC = XCTestExpectation(description: "Read for 'C' key")
 
-        valueCache.value(forKey: "A").whenSuccess { value in
+        cache.value(forKey: "A").whenSuccess { value in
 
             XCTAssertEqual("AAAAAA", value)
             expA.fulfill()
         }
 
-        valueCache.value(forKey: "B").whenSuccess { value in
+        cache.value(forKey: "B").whenSuccess { value in
 
             XCTAssertEqual("BBBBBB", value)
             expB.fulfill()
         }
 
-        valueCache.value(forKey: "C").whenSuccess { value in
+        cache.value(forKey: "C").whenSuccess { value in
 
             XCTAssertEqual("CCCCCC", value)
             expC.fulfill()
@@ -233,21 +233,21 @@ final class KeyValueCacheTests: XCTestCase {
         expB = XCTestExpectation(description: "Read for 'B' key")
         expC = XCTestExpectation(description: "Read for 'C' key")
 
-        valueCache.removeAllValues()
+        cache.removeAllValues()
 
-        valueCache.value(forKey: "A").whenSuccess { value in
+        cache.value(forKey: "A").whenSuccess { value in
 
             XCTAssertNil(value)
             expA.fulfill()
         }
 
-        valueCache.value(forKey: "B").whenSuccess { value in
+        cache.value(forKey: "B").whenSuccess { value in
 
             XCTAssertNil(value)
             expB.fulfill()
         }
 
-        valueCache.value(forKey: "C").whenSuccess { value in
+        cache.value(forKey: "C").whenSuccess { value in
 
             XCTAssertNil(value)
             expC.fulfill()
@@ -263,5 +263,44 @@ final class KeyValueCacheTests: XCTestCase {
         }
 
         wait(for: [shutdownExp], timeout: 1.0)
+    }
+
+    func testCountLimit() throws {
+        let cache = KeyValueCache<String, String>()
+
+        cache.countLimit = 2
+
+        let now = Date()
+
+        cache.setValue("AAAAAA", forKey: "A", expireDate: now.addingTimeInterval(10))
+
+        cache.setValue("BBBBBB", forKey: "B", expireDate: now.addingTimeInterval(10))
+
+        cache.setValue("CCCCCC", forKey: "C")
+
+        Thread.sleep(forTimeInterval: 1)
+
+        XCTAssertEqual(cache._cache.count, 2)
+
+        cache.countLimit = 1
+
+        Thread.sleep(forTimeInterval: 1)
+
+        XCTAssertEqual(cache._cache.count, 1)
+
+        cache.setValue("DDDDDD", forKey: "D")
+
+        Thread.sleep(forTimeInterval: 1)
+
+        XCTAssertEqual(cache._cache.count, 1)
+
+        cache.countLimit = 0
+
+        cache.setValue("EEEEEE", forKey: "E")
+        cache.setValue("FFFFFF", forKey: "F")
+
+        Thread.sleep(forTimeInterval: 1)
+
+        XCTAssertEqual(cache._cache.count, 3)
     }
 }
