@@ -303,4 +303,33 @@ final class KeyValueCacheTests: XCTestCase {
 
         XCTAssertEqual(cache._cache.count, 3)
     }
+
+    func testCostLimit() throws {
+        let cache = KeyValueCache<String, String>()
+
+        cache.totalCostLimit = 100
+
+        cache.setValue("AAAAAA", forKey: "A", cost: 20)
+        cache.setValue("BBBBBB", forKey: "B", cost: 50)
+        cache.setValue("CCCCCC", forKey: "C", cost: 50)
+
+        Thread.sleep(forTimeInterval: 1)
+
+        XCTAssertEqual(cache._totalCost, cache.totalCost)
+        XCTAssertLessThanOrEqual(cache.totalCost, 100)
+
+        cache.totalCostLimit = 50
+        Thread.sleep(forTimeInterval: 1)
+
+        XCTAssertEqual(cache._totalCost, cache.totalCost)
+        XCTAssertLessThanOrEqual(cache.totalCost, 50)
+    }
+}
+
+extension KeyValueCache {
+    var totalCost: Int {
+        _cache.values.reduce(0) { cost, value in
+            cost + value.cost
+        }
+    }
 }
