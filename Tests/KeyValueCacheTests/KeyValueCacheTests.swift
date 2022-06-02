@@ -323,6 +323,12 @@ final class KeyValueCacheTests: XCTestCase {
 
         XCTAssertEqual(cache._totalCost, cache.totalCost)
         XCTAssertLessThanOrEqual(cache.totalCost, 50)
+
+        cache.setValue("DDDDD", forKey: "D", cost: 60)
+        Thread.sleep(forTimeInterval: 1)
+
+        XCTAssertEqual(cache._totalCost, cache.totalCost)
+        XCTAssertLessThanOrEqual(cache.totalCost, 50)
     }
 }
 
