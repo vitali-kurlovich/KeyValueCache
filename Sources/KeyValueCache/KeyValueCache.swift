@@ -213,27 +213,7 @@ extension KeyValueCache {
 
         var count = count
 
-        while count > 0 {
-            var iterator = _cache.makeIterator()
-
-            guard var lowestPriority = iterator.next() else {
-                return
-            }
-
-            while let next = iterator.next() {
-                let result = priority.comparePriority(first: lowestPriority.value.info, next: next.value.info)
-
-                if result == .orderedDescending {
-                    lowestPriority = next
-                }
-            }
-
-            let key = lowestPriority.key
-            let value = lowestPriority.value
-            _cache.removeValue(forKey: key)
-
-            _totalCost -= value.cost
-
+        while count > 0, removeLowestPriorityValue() != nil {
             count -= 1
         }
     }
@@ -243,8 +223,32 @@ extension KeyValueCache {
 
         var cost = cost
 
-        while cost > 0 {
-            cost -= 1
+        while cost > 0, let value = removeLowestPriorityValue() {
+            cost -= value.cost
         }
+    }
+
+    func removeLowestPriorityValue() -> ValueType<Value>? {
+        var iterator = _cache.makeIterator()
+
+        guard var lowestPriority = iterator.next() else {
+            return nil
+        }
+
+        while let next = iterator.next() {
+            let result = priority.comparePriority(first: lowestPriority.value.info, next: next.value.info)
+
+            if result == .orderedDescending {
+                lowestPriority = next
+            }
+        }
+
+        let key = lowestPriority.key
+        let value = lowestPriority.value
+        _cache.removeValue(forKey: key)
+
+        _totalCost -= value.cost
+
+        return value
     }
 }
