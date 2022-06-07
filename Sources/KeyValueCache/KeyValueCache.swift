@@ -19,14 +19,18 @@ final class KeyValueCache<Key: Hashable, Value> {
     public var countLimit: Int = 0 {
         didSet {
             precondition(countLimit >= 0)
-            releaseIfNeeds(byCount: 0)
+            eventLoop.execute {
+                self.releaseIfNeeds(byCount: 0)
+            }
         }
     }
 
     public var totalCostLimit: Int = 0 {
         didSet {
             precondition(totalCostLimit >= 0)
-            releaseIfNeeds(byCost: 0)
+            eventLoop.execute {
+                self.releaseIfNeeds(byCost: 0)
+            }
         }
     }
 
