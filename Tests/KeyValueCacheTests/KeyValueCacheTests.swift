@@ -330,6 +330,53 @@ final class KeyValueCacheTests: XCTestCase {
         XCTAssertEqual(cache._totalCost, cache.totalCost)
         XCTAssertLessThanOrEqual(cache.totalCost, 50)
     }
+
+    func testReplace() throws {
+        let cache = KeyValueCache<String, String>()
+
+        cache.setValue("AAAAAA", forKey: "A", cost: 20)
+        cache.setValue("BBBBBB", forKey: "B", cost: 50)
+
+        var expA = XCTestExpectation(description: "Read for 'A' key")
+        var expB = XCTestExpectation(description: "Read for 'B' key")
+
+        cache.value(forKey: "A").whenSuccess { value in
+
+            XCTAssertEqual("AAAAAA", value)
+            expA.fulfill()
+        }
+
+        cache.value(forKey: "B").whenSuccess { value in
+
+            XCTAssertEqual("BBBBBB", value)
+            expB.fulfill()
+        }
+
+        wait(for: [expA, expB], timeout: 1.0)
+
+        XCTAssertEqual(cache._totalCost, cache.totalCost)
+
+        cache.setValue("AAAAAAA", forKey: "A", cost: 200)
+
+        expA = XCTestExpectation(description: "Read for 'A' key")
+        expB = XCTestExpectation(description: "Read for 'B' key")
+
+        cache.value(forKey: "A").whenSuccess { value in
+
+            XCTAssertEqual("AAAAAAA", value)
+            expA.fulfill()
+        }
+
+        cache.value(forKey: "B").whenSuccess { value in
+
+            XCTAssertEqual("BBBBBB", value)
+            expB.fulfill()
+        }
+
+        wait(for: [expA, expB], timeout: 1.0)
+
+        XCTAssertEqual(cache._totalCost, cache.totalCost)
+    }
 }
 
 extension KeyValueCache {
