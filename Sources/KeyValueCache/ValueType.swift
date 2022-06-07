@@ -30,8 +30,8 @@ extension ValueType {
 }
 
 extension ValueType {
-    init(value: Value, expare: Date?, cost: Int) {
-        self.init(value: value, info: .init(cost: cost, expireDate: expare))
+    init(value: Value, expireDate: Date?, cost: Int) {
+        self.init(value: value, info: .init(cost: cost, expireDate: expireDate))
     }
 }
 
