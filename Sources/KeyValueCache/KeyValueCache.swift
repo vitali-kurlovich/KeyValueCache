@@ -97,9 +97,11 @@ extension KeyValueCache {
 
             self.releaseIfNeeds(for: info)
 
+            let oldCost = self._cache[key]?.cost ?? 0
+
             self._cache[key] = .init(value: value, info: info)
 
-            self._totalCost += info.cost
+            self._totalCost += (info.cost - oldCost)
         }
     }
 
