@@ -11,7 +11,7 @@ jobs:
     env:
       CODECOV_TOKEN : 274bae88-45e7-4836-a5f4-3b8c7e3efdf8
     
-    runs-on: macos-latest
+    runs-on: macos-12
     steps:
     - uses: actions/checkout@v3
     - name: Run tests
